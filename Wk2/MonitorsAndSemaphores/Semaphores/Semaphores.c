@@ -40,7 +40,7 @@ main() {
 	// init semaphore to 0, for only this process
    sem_init(&mutex, 0, 1);
    pthread_t th1,th2;
-	 //Create threards
+	 //Create threads
    pthread_create(&th1,NULL,printAlphabet,NULL);
    pthread_create(&th2,NULL,printAlphabet,NULL);
    //Join threads with the main thread
