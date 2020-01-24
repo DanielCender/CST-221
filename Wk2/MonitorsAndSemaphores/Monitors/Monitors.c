@@ -1,87 +1,106 @@
 /*
 * Author:	Daniel cender
-* Date:		01/19/2020
-* Basic program that utilizes pthreads and semaphores to
+* Date:		01/23/2020
+* Basic program that utilizes pthreads, pthread condition variables, and a mutex to
 * produce a program that prints out the entire alphabet using multiple threads in sync.
 *
+* This implementation of a monitor is not what we might traditionally expect.
+* The actual "monitor" construct in CS that utilizes condition variales to determine
+* which process will run next in the program.
 *
+* In the case of this one, the external state being evaluated is the "users" variable.
+*
+* "Users" should always be 1 or 0, since we are running 2 threads.
+* The practical use of a "monitor" check has us running a continual "while(users != 0)" check
+* in our thread functions.
+*
+* Check out this paper for a great look into using monitor checks in C/C++
+* http://pages.cs.wisc.edu/~remzi/OSTEP/threads-monitors.pdf
+*
+* Compile and run this program with:
+* ~ gcc -o Monitors Monitors.c -lpthread
+* ~ ./Monitors
 */
 
-#include <stdio.h>
 #include <pthread.h>
-#include <semaphore.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <unistd.h>
 
-// sem_t mutex;
-char alphabet[] = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'};
+#define ALPHA_LENGTH 26
+
+char alphabet[] = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' };
 int idx;
 
-pthread_t monitor_ts[2]; // Maybe hold couple of pthreads to handle/wait based on sync blocks?
-
 struct MONITOR {
-	sem_t startSync;
-	sem_t endSync;
-	int firstAction;
-	int secondAction;
-}
+    int users; // count of the users on the resource
+    pthread_mutex_t monitor; // monitor lock | mutex
+    pthread_cond_t firstBlockSig; // conditional variables, signal threads to check
+    pthread_cond_t secondBlockSig;
+};
 
 struct MONITOR monitor;
 
-int monitor_init() {
-    // Initialize the structure
-   	monitor.firstAction = 0;
-	 	monitor.secondAction = 0;
+// Below are thread functions copied over from Semaphores project,
+// split into two separate functions which can process any index of the alphabet array when
+// they lay claim to the semaphore
 
-    // initialize the semaphores
-    if(sem_init(&(monitor_data.startSync), 0, 1) == 0 &&
-       sem_init(&(monitor_data.endSync), 0, 1) == 0){
-				// Init and join threads here maybe??
-        return 0;
-    } else {
-      printf("Unable to initialize semaphores\n");
+void* thread_1(void* arg)
+{
+    while (idx < ALPHA_LENGTH) {
+        // "monitor"-type check against mutex and conditional variables
+        pthread_mutex_lock(&(monitor.monitor));
+        while (monitor.users != 0) {
+            pthread_cond_wait(&(monitor.firstBlockSig), &(monitor.monitor));
+        }
+        monitor.users++;
+        /***/
+        printf("\nThread 1 %d, Entered...\n", pthread_self());
+        printf("%c\n", alphabet[idx]);
+        printf("Index at: %i", idx);
+        ++idx; // increment index
+        printf("\nJust Exiting...\n");
+        /***/
+        monitor.users--;
+        pthread_cond_signal(&(monitor.secondBlockSig));
+        pthread_mutex_unlock(&(monitor.monitor));
     }
-		return 1;
+    return NULL;
 }
 
-void monitor_destroy() {
-	sem_destroy(&(monitor.startSync));
-	sem_destroy(&(monitor.endSync));
+// This thread contains a loop that would potentially run
+// at the same time as thread 1, without the monitor construct
+void* thread_2(void* arg)
+{
+    while (idx < ALPHA_LENGTH) {
+        pthread_mutex_lock(&(monitor.monitor));
+        while (monitor.users != 0) {
+            pthread_cond_wait(&(monitor.secondBlockSig), &(monitor.monitor));
+        }
+        monitor.users++;
+        /***/
+        printf("\nThread 2 %d, Entered...\n", pthread_self());
+        printf("%c\n", alphabet[idx]);
+        printf("Index at: %i", idx);
+        ++idx; // increment index
+        printf("\nJust Exiting...\n");
+        // sleep(1);
+        /***/
+        monitor.users--;
+        pthread_cond_signal(&(monitor.firstBlockSig));
+        pthread_mutex_unlock(&(monitor.monitor));
+    }
+    return NULL;
 }
 
-/**
- * Func that prints out 2 chars of the alphabet array, shouldn't need
- * to wait or post to semaphore if working in monitor structure
- */
-void* printAlphabet(void* arg) { //function which act like thread
-	while(idx <= 25) {
-	 if(idx > 25) break;
-	 printf("\nEntered..\n");
-	 printf("%c\n", alphabet[idx]);
-	 printf("Index at: %i", idx);
-	 ++idx; // increment index
-	 printf("\nJust Exiting...\n");
-	}
-	pthread_exit(0);
-}
+int main()
+{
+    idx = 0; // max of 25, total length of alphabet
+    pthread_t th1, th2;
+    pthread_create(&th1, NULL, thread_1, NULL);
+    pthread_create(&th2, NULL, thread_2, NULL);
+    pthread_join(th1, NULL);
+    pthread_join(th2, NULL);
 
-
-main() {
-	idx = 0; // max of 25, total length of alphabet
-
-	if(monitor_init() == 0) {
-		// Ready to define synchronized program logic
-		monitor_startSync(); // TODO
-		// Process 1
-		wait(3); // Would ordinarily cause second thread to run first
-		print("Would print out some stuff here, to print first....");
-		monitor_endSync(); // TODO
-	/* **** */
-		monitor_startSync(); // TODO
-		// Process 2
-		print("Would print out some stuff here, to print second....");
-		monitor_endSync(); // TODO
-
-	};
-	monitor_destroy();
-
+    return 0;
 }
