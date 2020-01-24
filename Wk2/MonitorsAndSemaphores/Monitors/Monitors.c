@@ -61,6 +61,8 @@ void* thread_1(void* arg)
         ++idx; // increment index
         printf("\nJust Exiting...\n");
         /***/
+        // Decrementing this int condition is invaluable to keeping the other
+        // thread waiting until the current one is truly finished and releases the lock
         monitor.users--;
         pthread_cond_signal(&(monitor.secondBlockSig));
         pthread_mutex_unlock(&(monitor.monitor));
@@ -73,6 +75,7 @@ void* thread_1(void* arg)
 void* thread_2(void* arg)
 {
     while (idx < ALPHA_LENGTH) {
+        // "monitor"-type check against mutex and conditional variables
         pthread_mutex_lock(&(monitor.monitor));
         while (monitor.users != 0) {
             pthread_cond_wait(&(monitor.secondBlockSig), &(monitor.monitor));
@@ -84,8 +87,8 @@ void* thread_2(void* arg)
         printf("Index at: %i", idx);
         ++idx; // increment index
         printf("\nJust Exiting...\n");
-        // sleep(1);
         /***/
+        // Phase out of the critical section
         monitor.users--;
         pthread_cond_signal(&(monitor.firstBlockSig));
         pthread_mutex_unlock(&(monitor.monitor));
@@ -95,7 +98,7 @@ void* thread_2(void* arg)
 
 int main()
 {
-    idx = 0; // max of 25, total length of alphabet
+    idx = 0;
     pthread_t th1, th2;
     pthread_create(&th1, NULL, thread_1, NULL);
     pthread_create(&th2, NULL, thread_2, NULL);
