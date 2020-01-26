@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h> /*for system()*/
+#include <unistd.h>
 
 /* The LONG_TIMEOUT will be used in the first thread process,
  then the first thread to encounter a currently locked mutex
@@ -25,7 +26,7 @@
 #define NUM_THREADS 10 // set num of threads here
 #define THREAD_ITERATIONS 5 // set iterations to run in each thread created
 
-pthread_mutex_t* mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 // uint64_t runsLeft[NUM_THREADS] = { THREAD_ITERATIONS };
 pthread_t threads[NUM_THREADS] = { 0 };
 
@@ -34,10 +35,10 @@ uint64_t resource = 12345678910; // resource being "fought over"
 /**
  * Basic implementation of Array.indexOf for int arrays
  */
-int64_t indexOf(uint64_t* arr, uint64_t* el)
+int64_t indexOf(pthread_t arr[], pthread_t el)
 {
     for (uint64_t i = 0; i < NUM_THREADS; ++i) {
-        if (arr[i] == el) {
+        if ((&arr[i]) == &el) {
             return i;
         }
     }
@@ -47,11 +48,15 @@ int64_t indexOf(uint64_t* arr, uint64_t* el)
 void* thread_func(void* args)
 {
     uint64_t runsLeft = THREAD_ITERATIONS;
-    uint64_t pid = pthread_self();
+    pthread_t pid = pthread_self();
+
     int64_t pidIndex = indexOf(threads, pid);
 
-    while (1 && runsLeft != 0) {
-        if (pthread_mutex_trylock(mutex) == 0) {
+    while (runsLeft > 0) {
+        if (pthread_mutex_trylock(&mutex) == 0) {
+            if (pid == threads[0]) {
+                printf("Longer running thread now in control...");
+            }
             // critical region
             printf("Thread %i on my %i iteration:\n", pidIndex, runsLeft - THREAD_ITERATIONS);
             printf("Printing resource: %i\n\n###\n\n", resource);
@@ -61,6 +66,15 @@ void* thread_func(void* args)
             } else {
                 // Might not need this actually
                 sleep(SHORT_TIMEOUT);
+            }
+
+            // decrement remaining runs
+            --runsLeft;
+
+            // give up mutex lock
+            if (pthread_mutex_unlock(&mutex) != 0) {
+                perror("Couldn't unlock mutex!");
+                pthread_exit(&pid);
             }
         } else {
             // set timeout for shorter processes
@@ -100,12 +114,13 @@ void* thread_func(void* args)
 // }
 
 // TODO: Need logger func - to keep the thread func's clean
+// Implement print to log.txt file
 
 int main()
 {
     // Create threads
     for (int idx = 0; idx < NUM_THREADS; ++idx) {
-        pthread_create(threads[idx], NULL, thread_func, NULL);
+        pthread_create(&threads[idx], NULL, thread_func, NULL);
     }
 
     // Manage the threads - prune them and restart them as needed
