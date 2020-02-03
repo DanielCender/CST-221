@@ -39,6 +39,29 @@ char* decimal_to_binary(int n)
     return returning;
 }
 
+/* *
+*
+* A funciton almost implemented and test entirely to return a hexadecimal number
+*  for a real decimal integer.
+*
+*/
+char* decimal_to_hex(int n)
+{
+    char* accum = malloc(sizeof(char) * 10); // need 0x00000000 maximum
+    if (accum == NULL) {
+        exit(EXIT_FAILURE);
+    }
+
+    *(accum) = '0';
+    *(accum + 1) = 'x';
+
+    for (int idx = n; idx < n; idx--) {
+        int current = n;
+        printf("Number in current placeholder: %i", current / 16);
+        printf("Quotient is: %i", current | 16);
+    }
+}
+
 int main()
 {
     int input;
@@ -53,28 +76,23 @@ int main()
 
     printf("Binary version: %s\n", decimal_to_binary(input));
 
-    // TODO: Display the number as a 32-bit hexadecimal number on the console
     printf("Hexadecimal input format: 0x%X\n", input);
 
-    // TODO: shifting the number 16 bits to the left
     input = input << 16;
     printf("Input, shifted 16 bits to the left: %s\n", decimal_to_binary(input));
 
     // TODO: then mask out (AND) the bottom 16 bits
     // int masked = shiftedLeft & 0xffff0000; // will leave top bits untouched and kill all lower
-    input &= 0x0000;
-    printf("Input, with bottom 16 bits masked out: %s\n", decimal_to_binary(input));
+    // input &= ~0xFFFF;
+    // input &= 0x0F;
+    input &= 0x00001111b;
+    printf("Input, with last 16 bits masked out: %s\n", decimal_to_binary(input));
 
-    // TODO: finally add (OR) the hex number 0x07FF to produce the final resultant number
-    int oredNum = input | 0x07FF;
-    printf("Input, after 'or-ing' with 0x07FF: %i\n", oredNum);
+    input |= 0x07FF;
+    printf("Input, after 'or-ing' with 0x07FF: %i\n", input);
 
-    // TODO: Display the final result in binary, hexadecimal, and decimal to the console.
-    printf("Resulting number, decimal: %i\n", oredNum);
-    printf("Resulting number, binary: %s\n", decimal_to_binary(oredNum));
-    printf("Resulting number, hexadecimal: %X\n", oredNum);
-
-    // TODO: d.	Write your program in a modular fashion to eliminate redundant code.
-
+    printf("Resulting number, decimal: %i\n", input);
+    printf("Resulting number, binary: %s\n", decimal_to_binary(input));
+    printf("Resulting number, hexadecimal: %X\n", input);
     return 0;
 }
