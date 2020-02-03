@@ -1,0 +1,16 @@
+function translateVirtualToPhysicalAddress(addr) {
+	var physicalAddr
+	var pageOffset = parseOffset(addr)
+	var tlbRecord = findMatchInTLB(addr)
+	if(tlbRecord is valid/present) {
+		physicalAddr = getPhysicalAddrFromFrame(tlbRecord, pageOffset)
+	} else {
+		var pageTableRecord = getFrameFromPageTable(addr)
+		if (pageTableRecord not valid/present) {
+			pageTableRecord = swapPageTableRecords(addr)
+		}
+		var newTLBEntry = swapOrAddTLBEntry(addr, pageTableRecord)
+		physicalAddr = getPhysicalAddrFromFrame(newTLBEntry, pageOffset)
+	}
+	return physicalAddr
+}
