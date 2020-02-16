@@ -14,14 +14,6 @@ echo $WORKING_DIR
 # Go to the root directory
 ~
 
-# TODO Recursively get
-# grep
-
-# `stat -f '%i' DQ2.sh` gets inode number of file
-
-#
-# find / -type f -links +2 -printf format "%i %n %p\n"
-
 for i in $(find / -type f -links +2 -printf '%i'):
 do
 	echo "File contains >=2 hard links: $i"
