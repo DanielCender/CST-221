@@ -2,15 +2,14 @@
 
 #
 # Desc: A script that adds users to a Linux operating system and user group
-#	 using a file as input. Please execute with 'sudo'
+#	 using a file as input. Please execute with 'sudo' prepended.
 # Author: Daniel Cender
 # Date: Feb 22, 2020
 #
 #
-# Key Resources:
+# Some Resources:
 # 	- Parsing text files: https://stackoverflow.com/questions/37474694/parsing-lines-in-text-in-bash-script
 #		- Encrypting passcode with openssl: https://stackoverflow.com/questions/10106771/encrypt-a-string-using-openssl-command-line/38581705
-#		- Hashing an SHA-512 password with openssl: https://unix.stackexchange.com/a/542835
 # 	- Creating users with hashed password: https://www.techrepublic.com/article/how-to-create-users-and-groups-in-linux-from-the-command-line/
 # 	- Passwords hashed with: openssl passwd -1 -salt secret password1
 
