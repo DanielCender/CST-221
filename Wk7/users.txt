@@ -1,0 +1,5 @@
+newUser1 $1$secret$O.fwKYPvUCNtpXo/GBVDY.
+newUser2 $1$secret$tSLuH6ddwI7tOYBI77u9k.
+newUser3 $1$secret$pUUdb.pg.15bctSGIyI1X.
+newUser4 $1$secret$0rG7qgFnuQdosisx9K3D01
+newUser5 $1$secret$iKgbR90H4/nRoQRhb0Lgz1
